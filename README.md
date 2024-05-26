@@ -1,4 +1,4 @@
-# 5Project 2: Unix/Linux Command Line Interpreter
+# Project 2: Unix/Linux Command Line Interpreter
 
 This program is a simple shell implemented in C that supports interactive and batch modes. It allows users to execute commands, both single and multiple, separated by semicolons. The shell also provides functionality to interrupt the execution of a command using a specific key combination.
 
