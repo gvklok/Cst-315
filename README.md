@@ -13,16 +13,16 @@ This program is a simple shell implemented in C that supports interactive and ba
 ### Interactive Mode
 
 1. Open a terminal.
-2. Navigate to the directory containing the compiled executable file (`shell`).
-3. Run the program using `./shell`.
+2. Navigate to the directory containing the compiled executable file (`Project2`).
+3. Run the program using `./Project2`. or simply load it into your ide and press run
 
 ### Batch Mode
 
 1. Create a text file containing a list of commands, each on a new line.
-2. Save the file with a `.txt` extension (e.g., `batch_commands.txt`).
+2. Save the file with a `.txt` extension (e.g., `batch.txt`).
 3. Open a terminal.
 4. Navigate to the directory containing the compiled executable file (`shell`).
-5. Run the program using `./shell batch_commands.txt`.
+5. Run the program using `./Project2 batch.txt`.
 
 ## Key Combinations
 
