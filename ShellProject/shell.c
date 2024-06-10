@@ -28,36 +28,52 @@
 #define MAX_PROCESSES 64
 
 // Structures for page tables and frame tables
-typedef struct {
+typedef struct
+{
     int frame_number;
     int valid;
 } PageTableEntry;
 
-typedef struct {
+typedef struct
+{
     int process_id;
     int page_number;
     int valid;
 } FrameTableEntry;
 
-typedef struct {
+typedef struct
+{
     int process_id;
     int page_number;
     int access_time;
 } PageAccessEntry;
 
 // Global memory management structures
+// This array represents the page table for each process.
+// It is a two-dimensional array with dimensions MAX_PROCESSES and VIRTUAL_MEMORY_SIZE / PAGE_SIZE.
 PageTableEntry page_table[MAX_PROCESSES][VIRTUAL_MEMORY_SIZE / PAGE_SIZE];
+
+// This array represents the page table for the kernel.
+// It is a one-dimensional array with size KERNEL_MEMORY_SIZE / PAGE_SIZE.
 PageTableEntry kernel_page_table[KERNEL_MEMORY_SIZE / PAGE_SIZE];
+
+// This array represents the frame table for physical memory.
+// It is a one-dimensional array with size PHYSICAL_MEMORY_SIZE / PAGE_SIZE.
 FrameTableEntry frame_table[PHYSICAL_MEMORY_SIZE / PAGE_SIZE];
+
+// This array represents the page access history for physical memory.
+// It is a one-dimensional array with size PHYSICAL_MEMORY_SIZE / PAGE_SIZE.
 PageAccessEntry page_access_history[PHYSICAL_MEMORY_SIZE / PAGE_SIZE];
 
 int free_frame_index = 0;
 int current_time = 0;
 
 // Function to log a command to History.txt
-void log_command(const char *command) {
+void log_command(const char *command)
+{
     FILE *history_file = fopen("History.txt", "a");
-    if (history_file == NULL) {
+    if (history_file == NULL)
+    {
         perror(RED "Failed to open history file" RESET);
         return;
     }
@@ -67,37 +83,44 @@ void log_command(const char *command) {
 
 // Global variable to keep track of child processes
 pid_t child_pid = -1;
-void exit_shell(int sig) {
+void exit_shell(int sig)
+{
     printf(RED "\nExiting shell...\n" RESET);
     exit(0);
 }
 
-void end_execution(int sig) {
-    if (child_pid > 0) {
+void end_execution(int sig)
+{
+    if (child_pid > 0)
+    {
         kill(child_pid, SIGKILL); // Kill the child process
         printf(YELLOW "\nCommand interrupted. Returning to prompt...\n" RESET);
     }
 }
 
 // Function to split the input into commands if you want to run multiple commands at once
-void split_commands(char *input, char **commands) {
+void split_commands(char *input, char **commands)
+{
     // Splits the input into commands using the delimiter ";"
     char *token = strtok(input, ";");
     int i = 0;
     // Stores the commands in the commands array
-    while (token != NULL && i < MAX_ARGS - 1) {
+    while (token != NULL && i < MAX_ARGS - 1)
+    {
         commands[i++] = token;
         token = strtok(NULL, ";");
     }
     commands[i] = NULL;
 }
 
-void parse_command(char *cmd, char **args) {
+void parse_command(char *cmd, char **args)
+{
     // Splits the command into arguments using the delimiter " "
     char *token = strtok(cmd, " \n");
     int i = 0;
     // Stores the arguments in the args array
-    while (token != NULL && i < MAX_ARGS - 1) {
+    while (token != NULL && i < MAX_ARGS - 1)
+    {
         args[i++] = token;
         token = strtok(NULL, " \n");
     }
@@ -107,77 +130,101 @@ void parse_command(char *cmd, char **args) {
 /**
  * Function to initialize memory management structures
  */
-void initialize_memory_management() {
+void initialize_memory_management()
+{
     // Initialize frame table
-    for (int i = 0; i < PHYSICAL_MEMORY_SIZE / PAGE_SIZE; i++) {
-        frame_table[i].process_id = -1; // Set process ID to -1 (no process assigned)
-        frame_table[i].page_number = -1; // Set page number to -1 (no page assigned)
-        frame_table[i].valid = 0; // Set valid flag to 0 (not currently being used)
+    for (int i = 0; i < PHYSICAL_MEMORY_SIZE / PAGE_SIZE; i++)
+    {
+        frame_table[i].process_id = -1;         // Set process ID to -1 (no process assigned)
+        frame_table[i].page_number = -1;        // Set page number to -1 (no page assigned)
+        frame_table[i].valid = 0;               // Set valid flag to 0 (not currently being used)
         page_access_history[i].access_time = 0; // Set access time to 0 (not accessed yet)
     }
 
-    // Initialize page tables for each process with a 2D array 
-    for (int i = 0; i < MAX_PROCESSES; i++) {
-        for (int j = 0; j < VIRTUAL_MEMORY_SIZE / PAGE_SIZE; j++) {
+    // Initialize page tables for each process with a 2D array
+    for (int i = 0; i < MAX_PROCESSES; i++)
+    {
+        for (int j = 0; j < VIRTUAL_MEMORY_SIZE / PAGE_SIZE; j++)
+        {
             page_table[i][j].frame_number = -1; // Initialize frame number to -1 (no frame assigned)
-            page_table[i][j].valid = 0; // Set valid flag to 0 (not currently being used)
+            page_table[i][j].valid = 0;         // Set valid flag to 0 (not currently being used)
         }
     }
 
     // Initialize kernel page table
-    for (int i = 0; i < KERNEL_MEMORY_SIZE / PAGE_SIZE; i++) {
+    for (int i = 0; i < KERNEL_MEMORY_SIZE / PAGE_SIZE; i++)
+    {
         kernel_page_table[i].frame_number = i; // Set frame number to i (kernel pages are contiguous)
-        kernel_page_table[i].valid = 1; // Set valid flag to 1 (kernel pages are always valid)
+        kernel_page_table[i].valid = 1;        // Set valid flag to 1 (kernel pages are always valid)
     }
 }
 
-int calculate_required_pages(char **args) {
-    if (strcmp(args[0], "ls") == 0) {
+int calculate_required_pages(char **args)
+{
+    if (strcmp(args[0], "ls") == 0)
+    {
         return 1;
-    } else if (strcmp(args[0], "gcc") == 0) {
+    }
+    else if (strcmp(args[0], "gcc") == 0)
+    {
         return 10;
-    } else {
+    }
+    else
+    {
         return 5; // Default to 5 pages for other commands
     }
 }
 
 // Function to allocate a page in physical memory
-int allocate_page(int process_id, int page_number, int is_kernel_page) {
+int allocate_page(int process_id, int page_number, int is_kernel_page)
+{
     int oldest_frame_index = -1;
     int oldest_access_time = INT_MAX;
 
     // Find the least recently used frame
-    for (int i = 0; i < PHYSICAL_MEMORY_SIZE / PAGE_SIZE; i++) {
-        if (!frame_table[i].valid) {
+    for (int i = 0; i < PHYSICAL_MEMORY_SIZE / PAGE_SIZE; i++)
+    {
+        if (!frame_table[i].valid)
+        {
             // If there's a free frame, use it
             oldest_frame_index = i;
             break;
-        } else if (page_access_history[i].access_time < oldest_access_time) {
+        }
+        else if (page_access_history[i].access_time < oldest_access_time)
+        {
             oldest_frame_index = i;
             oldest_access_time = page_access_history[i].access_time;
         }
     }
 
-    if (oldest_frame_index == -1) {
+    if (oldest_frame_index == -1)
+    {
         printf(RED "Out of physical memory\n" RESET);
         return -1; // No free frames
     }
 
     // Update page table and frame table
-    if (frame_table[oldest_frame_index].valid) {
+    if (frame_table[oldest_frame_index].valid)
+    {
         int old_process_id = frame_table[oldest_frame_index].process_id;
         int old_page_number = frame_table[oldest_frame_index].page_number;
-        if (old_process_id == -1) {
+        if (old_process_id == -1)
+        {
             kernel_page_table[old_page_number].valid = 0;
-        } else {
+        }
+        else
+        {
             page_table[old_process_id][old_page_number].valid = 0;
         }
     }
 
-    if (is_kernel_page) {
+    if (is_kernel_page)
+    {
         kernel_page_table[page_number].frame_number = oldest_frame_index;
         kernel_page_table[page_number].valid = 1;
-    } else {
+    }
+    else
+    {
         page_table[process_id][page_number].frame_number = oldest_frame_index;
         page_table[process_id][page_number].valid = 1;
     }
@@ -196,9 +243,12 @@ int allocate_page(int process_id, int page_number, int is_kernel_page) {
 /**
  * Function to deallocate memory for a process
  */
-void deallocate_memory(int process_id) {
-    for (int i = 0; i < VIRTUAL_MEMORY_SIZE / PAGE_SIZE; i++) {
-        if (page_table[process_id][i].valid) {
+void deallocate_memory(int process_id)
+{
+    for (int i = 0; i < VIRTUAL_MEMORY_SIZE / PAGE_SIZE; i++)
+    {
+        if (page_table[process_id][i].valid)
+        {
             int frame_number = page_table[process_id][i].frame_number;
             // Deallocate frame in frame table
             frame_table[frame_number].process_id = -1;
@@ -214,14 +264,22 @@ void deallocate_memory(int process_id) {
     }
 }
 
-//this function is called when a page fault occurs and a page needs to be allocated
-void handle_page_fault(int process_id, int page_number, int is_kernel_page) {
-    if (allocate_page(process_id, page_number, is_kernel_page) == -1) {
+// this function is called when a page fault occurs and a page needs to be allocated
+void handle_page_fault(int process_id, int page_number, int is_kernel_page)
+{
+    // Try to allocate a page in physical memory
+    if (allocate_page(process_id, page_number, is_kernel_page) == -1)
+    {
         printf(RED "Failed to allocate memory for page %d of process %d\n" RESET, page_number, process_id);
-    } else {
-        for (int i = 0; i < PHYSICAL_MEMORY_SIZE / PAGE_SIZE; i++) {
+    }
+    else
+    {
+        // Update the access time for the allocated page
+        for (int i = 0; i < PHYSICAL_MEMORY_SIZE / PAGE_SIZE; i++)
+        {
             if ((frame_table[i].process_id == process_id && frame_table[i].page_number == page_number) ||
-                (frame_table[i].process_id == -1 && frame_table[i].page_number == page_number)) {
+                (frame_table[i].process_id == -1 && frame_table[i].page_number == page_number))
+            {
                 page_access_history[i].access_time = current_time++;
                 break;
             }
@@ -229,31 +287,42 @@ void handle_page_fault(int process_id, int page_number, int is_kernel_page) {
     }
 }
 
-void execute_command(char **args) {
+void execute_command(char **args)
+{
     int required_pages = calculate_required_pages(args);
 
     // Fork the process
     child_pid = fork();
-    if (child_pid < 0) {
+    if (child_pid < 0)
+    {
         perror(RED "Fork failed" RESET);
         exit(1);
-    } else if (child_pid == 0) {
+    }
+    else if (child_pid == 0)
+    {
         // Child process
         int process_id = getpid() % MAX_PROCESSES; // Get the child process ID
 
         // Allocate memory for the process
-        for (int i = 0; i < required_pages; i++) {
-            if (page_table[process_id][i].valid == 0) {
+        for (int i = 0; i < required_pages; i++)
+        {
+            if (page_table[process_id][i].valid == 0)
+            {
                 handle_page_fault(process_id, i, 0);
             }
         }
 
         // Execute the command
-        if (execvp(args[0], args) == -1) {
+        if (execvp(args[0], args) == -1)
+        {
             perror(RED "Exec failed" RESET);
             exit(1);
         }
-    } else {
+        // Deallocate memory for the process
+        deallocate_memory(process_id); // <-- Add this line
+    }
+    else
+    {
         // Parent process
         int status;
         waitpid(child_pid, &status, 0);
@@ -261,8 +330,8 @@ void execute_command(char **args) {
     }
 }
 
-
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     // Initialize memory management
     initialize_memory_management();
 
@@ -271,19 +340,22 @@ int main(int argc, char *argv[]) {
     signal(SIGQUIT, end_execution);
 
     // Define variables for input line, command arguments, and commands as max because we don't know the size
-    //and arrays are not dynamic
-    char line[MAX_LINE]; 
-    char *args[MAX_ARGS]; 
-    char *commands[MAX_ARGS]; 
+    // and arrays are not dynamic
+    char line[MAX_LINE];
+    char *args[MAX_ARGS];
+    char *commands[MAX_ARGS];
 
-//if the user provides a batch file, read the file and execute the commands
-    if (argc == 2) {
+    // if the user provides a batch file, read the file and execute the commands
+    if (argc == 2)
+    {
         FILE *batch_file = fopen(argv[1], "r");
-        if (!batch_file) {
+        if (!batch_file)
+        {
             perror(RED "Failed to open batch file" RESET);
             return 1;
         }
-        while (fgets(line, sizeof(line), batch_file)) {
+        while (fgets(line, sizeof(line), batch_file))
+        {
             printf("Batch command: %s", line);
             log_command(line); // Log the batch command in the history file
 
@@ -291,16 +363,21 @@ int main(int argc, char *argv[]) {
             execute_command(args);
         }
         fclose(batch_file);
-    } else {
+    }
+    else
+    {
 
         // Interactive mode
-        while (1) {
+        while (1)
+        {
             printf(PURPLE "GLShell> " RESET);
-            if (!fgets(line, sizeof(line), stdin)) {
+            if (!fgets(line, sizeof(line), stdin))
+            {
                 break; // Handle EOF
             }
             split_commands(line, commands);
-            for (int i = 0; commands[i] != NULL; i++) {
+            for (int i = 0; commands[i] != NULL; i++)
+            {
                 log_command(commands[i]); // Log the command
 
                 parse_command(commands[i], args);
