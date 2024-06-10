@@ -253,6 +253,8 @@ void execute_command(char **args) {
             perror(RED "Exec failed" RESET);
             exit(1);
         }
+        deallocate_memory(process_id); // <-- Add this line
+
     } else {
         // Parent process
         int status;
