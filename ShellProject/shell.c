@@ -251,15 +251,31 @@ void handle_page_fault(int process_id, int page_number, int is_kernel_page) {
     }
 }
 
+
 void enqueue(Queue* queue, Process* process) {
-    if (queue->tail == NULL) {
-        queue->head = queue->tail = process;
+    printf("Enqueuing process PID: %d, Priority: %d\n", process->pid, process->priority);
+    if (queue->head == NULL || queue->head->priority > process->priority) {
+        process->next = queue->head;
+        queue->head = process;
+        if (queue->tail == NULL) {
+            queue->tail = process;
+        }
+        printf("Inserted at the head\n");
     } else {
-        queue->tail->next = process;
-        queue->tail = process;
+        Process* current = queue->head;
+        while (current->next != NULL && current->next->priority <= process->priority) {
+            current = current->next;
+        }
+        process->next = current->next;
+        current->next = process;
+        if (process->next == NULL) {
+            queue->tail = process;
+        }
+        printf("Inserted after PID: %d\n", current->pid);
     }
-    process->next = NULL;
 }
+
+
 
 Process* dequeue(Queue* queue) {
     if (queue->head == NULL) return NULL;
@@ -268,6 +284,7 @@ Process* dequeue(Queue* queue) {
     if (queue->head == NULL) queue->tail = NULL;
     return temp;
 }
+
 
 void addProcess(int pid, const char* command, int burst_time, int io_time, int priority) {
     if (process_count >= MAX_PROCESSES) {
@@ -375,6 +392,7 @@ void FCFS() {
         }
     }
 }
+
 
 
 
