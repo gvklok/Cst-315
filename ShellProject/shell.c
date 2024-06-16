@@ -350,7 +350,7 @@ void changeProcessPriority(int pid, int priority) {
 
 #define TIME_QUANTUM 5  // Define a time quantum for the round-robin scheduler
 
-void simulateFCFS() {
+void FCFS() {
     while (readyQueue.head != NULL) {
         Process* process = dequeue(&readyQueue);
         if (process == NULL) continue;
@@ -436,7 +436,7 @@ void handleCommand(char* command) {
         sscanf(command, "priority %d %d", &pid, &priority);
         changeProcessPriority(pid, priority);
     } else if (strncmp(command, "run", 3) == 0) {
-        simulateFCFS();  // Use FCFS instead of Round Robin
+            FCFS();  // Use FCFS instead of Round Robin
     } else if (strncmp(command, "add", 3) == 0) {
         int pid, burst_time, io_time, priority;
         char cmd[256];
