@@ -252,9 +252,13 @@ void handle_page_fault(int process_id, int page_number, int is_kernel_page) {
 }
 
 
+
+ //*Function to enqueue a process in the ready queue based on priority
+
 void enqueue(Queue* queue, Process* process) {
     printf("Enqueuing process PID: %d, Priority: %d\n", process->pid, process->priority);
     if (queue->head == NULL || queue->head->priority > process->priority) {
+        // If the queue is empty or the process has higher priority than the head
         process->next = queue->head;
         queue->head = process;
         if (queue->tail == NULL) {
@@ -262,6 +266,7 @@ void enqueue(Queue* queue, Process* process) {
         }
         printf("Inserted at the head\n");
     } else {
+        // Find the appropriate position to insert the process based on priority
         Process* current = queue->head;
         while (current->next != NULL && current->next->priority <= process->priority) {
             current = current->next;
@@ -276,6 +281,7 @@ void enqueue(Queue* queue, Process* process) {
 }
 
 
+//Function to dequeue a process from the ready queue
 
 Process* dequeue(Queue* queue) {
     if (queue->head == NULL) return NULL;
@@ -365,8 +371,10 @@ void changeProcessPriority(int pid, int priority) {
     printf("Process with PID %d not found\n", pid);
 }
 
-#define TIME_QUANTUM 5  // Define a time quantum for the round-robin scheduler
 
+/**
+ * Function to execute the First-Come, First-Served (FCFS) scheduling algorithm
+ */
 void FCFS() {
     while (readyQueue.head != NULL) {
         Process* process = dequeue(&readyQueue);
@@ -377,12 +385,14 @@ void FCFS() {
 
         int pid = fork();
         if (pid == 0) {
+            // Child process
             char* args[MAX_ARGS];
             parse_command(process->command, args);
             execvp(args[0], args);
             perror("execvp");
             exit(EXIT_FAILURE);
         } else {
+            // Parent process
             int status;
             waitpid(pid, &status, 0);  // Wait for the process to complete
             if (WIFEXITED(status)) {
@@ -432,36 +442,60 @@ void execute_command(char **args) {
     }
 }
 
+/**
+ * Function to handle different commands entered in the shell
+ */
 void handleCommand(char* command) {
     char *args[MAX_ARGS];
+    // Check if the command is "procs"
     if (strncmp(command, "procs", 5) == 0) {
         int detailed = 0, sorted_by_id = 0;
+        // Check if the command has the option "-a" for detailed output
         if (strstr(command, "-a")) detailed = 1;
+        // Check if the command has the option "-si" for sorting by process ID
         if (strstr(command, "-si")) sorted_by_id = 1;
+        // Print all processes with the specified options
         printAllProcesses(detailed, sorted_by_id);
-    } else if (strncmp(command, "info", 4) == 0) {
+    }
+    // Check if the command is "info"
+    else if (strncmp(command, "info", 4) == 0) {
         int pid;
         sscanf(command, "info %d", &pid);
+        // Find the process with the specified PID
         for (int i = 0; i < process_count; i++) {
             if (processes[i]->pid == pid) {
+                // Print detailed information about the process
                 printProcessInfo(processes[i], 1);
                 return;
             }
         }
         printf("Process with PID %d not found\n", pid);
-    } else if (strncmp(command, "priority", 8) == 0) {
+    }
+    // Check if the command is "priority"
+    else if (strncmp(command, "priority", 8) == 0) {
         int pid, priority;
         sscanf(command, "priority %d %d", &pid, &priority);
+        // Change the priority of the specified process
         changeProcessPriority(pid, priority);
-    } else if (strncmp(command, "run", 3) == 0) {
-            FCFS();  // Use FCFS instead of Round Robin
-    } else if (strncmp(command, "add", 3) == 0) {
+    }
+    // Check if the command is "run"
+    else if (strncmp(command, "run", 3) == 0) {
+        // Execute the First-Come, First-Served (FCFS) scheduling algorithm
+        FCFS();
+    }
+    // Check if the command is "add"
+    else if (strncmp(command, "add", 3) == 0) {
         int pid, burst_time, io_time, priority;
         char cmd[256];
         sscanf(command, "add %d %d %d %d %[^\n]", &pid, &burst_time, &io_time, &priority, cmd);
+        // Add a new process to the system
         addProcess(pid, cmd, burst_time, io_time, priority);
-    } else {
+    }
+    // If the command is not recognized, treat it as a regular shell command
+    else {
+        // Parse the command into arguments
         parse_command(command, args);
+        // Execute the command
         execute_command(args);
     }
 }
