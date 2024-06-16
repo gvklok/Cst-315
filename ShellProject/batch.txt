@@ -1,7 +1,18 @@
-echo "Starting batch file execution"
-ls -l
-echo "Creating a new file"
-touch newfile.txt
-echo "Listing files again"
-ls -l; echo "File contents:"; cat newfile.txt
-echo "Batch file execution finished"
+add 1 10 0 1 "echo Hello from process 1"
+add 2 15 0 2 "ls"
+add 3 20 0 3 "gcc --version"
+add 4 5 0 4 "pwd"
+
+procs
+
+procs -a
+
+procs -a -si
+
+priority 2 5
+
+info 2
+
+run
+
+procs -a
