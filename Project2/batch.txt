@@ -1,7 +1,0 @@
-echo "Starting batch file execution"
-ls -l
-echo "Creating a new file"
-touch newfile.txt
-echo "Listing files again"
-ls -l; echo "File contents:"; cat newfile.txt
-echo "Batch file execution finished"
