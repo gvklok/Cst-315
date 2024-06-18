@@ -1,18 +1,20 @@
-add 1 10 0 1 "echo Hello from process 1"
-add 2 15 0 2 "ls"
-add 3 20 0 3 "gcc --version"
-add 4 5 0 4 "pwd"
 
-procs
+create_dir testdir
 
-procs -a
+create_file testdir/file.txt 100
 
-procs -a -si
+display_tree testdir
 
-priority 2 5
+create_dir testdir/dir2
 
-info 2
+create_file testdir/dir2/hello.txt
 
-run
+display_tree testdir
 
-procs -a
+dir_info testdir
+dir_info testdir -d
+move_dir testdir moveddir
+duplicate_dir moveddir duplicateddir
+rename_dir moveddir Gabedir
+
+search_file duplicateddir filename.txt
